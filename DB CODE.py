@@ -58,5 +58,58 @@ only showing top 20 rows
 
 athletes.printSchema()
 #printSchema: It is used to display the Table name with datatype
+root
+ |-- PersonName: string (nullable = true)
+ |-- Country: string (nullable = true)
+ |-- Discipline: string (nullable = true)
 
 
+gender = gender.withColumn("Female", col("Female").cast(IntegerType()))\
+    .withColumn("Male", col("Male").cast(IntegerType()))\
+    .withColumn("Total", col("Total").cast(IntegerType()))
+#Here we are converting the datatype from string to integer for female, male and total columns
+#withColumn(): It is a transformation function which is used to change the value, convert datatype of an existing column,
+#create a new column etc.
+#cast: It is used to convert the column into any datatype
+
+
+
+# Find the top countries with highest number of gold medals: 
+top_gold_medal = medals.orderBy("Gold" , ascending = False).show()
+top_gold_medal = medals.orderBy("Gold" , ascending = False).select("TeamCountry", "Gold").show()
+#Here we are using orderby to get the gold column in descending to get the highest gold medal count.
+# If we want only two columns then use the select option which is used in the 2nd code. 
+
+
+# Calculate the average number of entries by gender for each discipline. 
+average_entries_by_gender = gender.withColumn(
+    'Avg_Female', gender['Female'] / gender['Total']
+).withColumn(
+    'Avg_Male', gender['Male'] / gender['Total']
+)
+average_entries_by_gender.show()
+#Here we are using with column to select and create a new column named Avg_female and Avg_male.
+#To calculate average dividing the female count by total count and same for male.
+#And finally using show() to display the output.
+
+
+athletes.repartition(1).write.mode("overwrite").option("header",'true').csv("/mnt/tokyoolympic/transformed_data/athletes")
+coaches.repartition(1).write.mode("overwrite").option("header",'true').csv("/mnt/tokyoolympic/transformed_data/coaches")
+gender.repartition(1).write.mode("overwrite").option("header",'true').csv("/mnt/tokyoolympic/transformed_data/gender")
+medals.repartition(1).write.mode("overwrite").option("header",'true').csv("/mnt/tokyoolympic/transformed_data/medals")
+teams.repartition(1).write.mode("overwrite").option("header",'true').csv("/mnt/tokyoolympic/transformed_data/teams")
+
+ # repartition: It is a method where it will save the entire file as separate parts in the destnation(transform_data).
+    #if we give it as 2 then if the total data is 100 1st 50 will be in a separate file and the next 50 will be in a separate file.
+        
+# mode(overwrite): It is used so that we can edit/rewrite and rerun the code as many times so that it won't throw any errors.
+    #if we didn't use it we cannot able to run more than 1 time.
+
+# .option("header",'true'): It is used to treat the first row as header.
+
+#.csv("/mnt/tokyoolympic/transformed_data/athletes"): .csv is to load the data as csv format.
+#("mountpoint/name of the container/name of the file to be saved in target")
+
+gender.withColumnRenamed("Total", "Total_Count")
+# withColumnRename: It is used to change the column name 
+#syntax: table_name.withColumnRenamed(existingcolumnname, newcolumnname)
